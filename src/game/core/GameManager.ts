@@ -57,6 +57,10 @@ class PacoGameManager {
     this.combo = 0;
     EventManager.emit("level:changed", { level, index });
     EventManager.emit("level:fact", { title: "Dato de calidad", body: level.qualityFact });
+
+    // Start automatically once the level is ready. This keeps the first
+    // click/tap/SPACE available exclusively for the player's first real jump.
+    if (this.status === "ready") this.start();
   }
 
   getEffectiveSpeed(now: number) {
