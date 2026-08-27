@@ -1,0 +1,31 @@
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes portalProgress { 0% { transform: translateX(-120%); } 65% { transform: translateX(140%); } 100% { transform: translateX(300%); } }
+@keyframes introVideo { from { transform: scale(1.08); filter: blur(3px); } to { transform: scale(1.01); filter: blur(0); } }
+@keyframes introRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes introProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes introClose { to { opacity: 0; transform: scale(1.015); visibility: hidden; } }
+@keyframes resourceEnter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes modalEnter { from { opacity: 0; transform: translateY(16px) scale(.985); } to { opacity: 1; transform: none; } }
+
+.portal-progress.is-active span { animation: portalProgress 1.15s var(--ease-soft) infinite; }
+.primary-button, .secondary-button, .icon-button, .auth-button, .profile-pill,
+.module-entry, .editorial-card, .team-person, .resource-card,
+.admin-quick-grid button, .asset-tile {
+  transition: transform 280ms var(--ease-out), box-shadow 280ms var(--ease-out), border-color 280ms var(--ease-out), background-color 280ms var(--ease-out), color 280ms var(--ease-out);
+}
+.primary-button:hover, .secondary-button:hover, .auth-button:hover { transform: translateY(-2px); }
+.primary-button:hover { box-shadow: 0 14px 32px rgba(13, 94, 199, .28); }
+.icon-button:hover { border-color: #a9bfdc; background: var(--blue-50); }
+.module-entry:hover, .editorial-card:hover, .team-person:hover, .resource-card:hover, .admin-quick-grid button:hover, .asset-tile:hover { transform: translateY(-5px); border-color: #b9cbe2; box-shadow: var(--shadow-md); }
+.module-entry:hover::before { transform: scaleX(1); }
+.module-entry:hover .module-entry__media img, .module-entry:hover .module-entry__media video { transform: scale(1.025); }
+.module-entry__media img, .module-entry__media video { transition: transform 420ms var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+  .reveal { opacity: 1; transform: none; }
+  .intro-experience__video { display: none; }
+}
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+.reduce-motion .reveal { opacity: 1; transform: none; }
