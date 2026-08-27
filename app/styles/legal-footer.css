@@ -1,0 +1,20 @@
+.site-footer__legal {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  color: inherit;
+  background: rgba(255,255,255,.04);
+  text-decoration: none;
+  font-size: .6rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.site-footer__legal:hover { color: white; background: rgba(255,255,255,.08); }
+
+@media (max-width: 720px) {
+  .site-footer__legal { width: fit-content; min-height: 42px; }
+}
