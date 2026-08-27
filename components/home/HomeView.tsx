@@ -19,7 +19,7 @@ import { Media } from "@/components/shared/Media";
 import { Reveal } from "@/components/shared/Reveal";
 import { MODULE_ACCENTS } from "@/lib/config/assets";
 import { formatDate, recordDescription, recordTitle } from "@/lib/utils/format";
-import type { Compliment, PortalCollections, PortalRoute, PortalSettings, Profile } from "@/types/portal";
+import type { Compliment, ContentRecord, PortalCollections, PortalRoute, PortalSettings, Profile } from "@/types/portal";
 
 interface HomeViewProps {
   collections: PortalCollections;
@@ -49,6 +49,7 @@ const moduleDefinitions = [
 
 export function HomeView({ collections, settings, compliments, profile, allowedRoutes, onNavigate, onComplimentSubmitted }: HomeViewProps) {
   const [query, setQuery] = useState("");
+  const collectionEntries = Object.entries(collections) as Array<[keyof PortalCollections, ContentRecord[]]>;
   const modules = useMemo(() => moduleDefinitions
     .filter((definition) => allowedRoutes.includes(definition.route))
     .map((definition) => ({
@@ -57,7 +58,7 @@ export function HomeView({ collections, settings, compliments, profile, allowedR
       panel: settings.modulePanels[definition.key],
     })), [allowedRoutes, collections, settings.modulePanels]);
 
-  const latest = useMemo(() => Object.entries(collections)
+  const latest = useMemo(() => collectionEntries
     .flatMap(([table, records]) => records.map((record) => ({ table, record })))
     .sort((a, b) => String(b.record.updated_at || b.record.created_at || "").localeCompare(String(a.record.updated_at || a.record.created_at || "")))
     .slice(0, 6), [collections]);
@@ -65,7 +66,7 @@ export function HomeView({ collections, settings, compliments, profile, allowedR
   const results = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("es");
     if (!needle) return [];
-    return Object.entries(collections)
+    return collectionEntries
       .flatMap(([table, records]) => records.map((record) => ({ table, record })))
       .filter(({ record }) => `${recordTitle(record)} ${recordDescription(record)} ${(record.tags || []).join(" ")}`.toLocaleLowerCase("es").includes(needle))
       .slice(0, 7);

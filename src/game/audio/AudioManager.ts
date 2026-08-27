@@ -7,8 +7,8 @@ export class AudioManager {
   private master = 0.04;
 
   constructor(private scene: Phaser.Scene) {
-    const ctx = scene.sound.context as AudioContext | undefined;
-    this.ctx = ctx;
+    const sound = scene.sound;
+    this.ctx = "context" in sound ? (sound.context as AudioContext) : undefined;
     this.bindEvents();
   }
 

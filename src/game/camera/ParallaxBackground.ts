@@ -7,7 +7,7 @@ const BG_HEIGHT = 300;
 function ensureProceduralTextures(scene: Phaser.Scene) {
   if (scene.textures.exists("paco-bg-far")) return;
 
-  const g = scene.make.graphics({ x: 0, y: 0, add: false });
+  const g = new Phaser.GameObjects.Graphics(scene);
 
   // Far mountains: multiple shaded faces produce a clean 2.5D silhouette.
   g.clear();

@@ -47,6 +47,7 @@
     ".openai",
     ".wrangler",
     ".sites-runtime",
-    "vite.config.ts"
+    "vite.config.ts",
+    "supabase/functions/**"
   ]
 }

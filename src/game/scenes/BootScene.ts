@@ -9,7 +9,7 @@ export class BootScene extends Phaser.Scene {
   create() {
     GameManager.reset();
 
-    const g = this.make.graphics({ x: 0, y: 0, add: false });
+    const g = new Phaser.GameObjects.Graphics(this);
 
     g.clear().fillStyle(0xffffff, 1).fillRect(0, 0, 8, 8);
     g.generateTexture("road-pixel", 8, 8);

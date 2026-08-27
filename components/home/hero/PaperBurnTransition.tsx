@@ -147,8 +147,9 @@ function applyClip(page: HTMLElement, contour: Float32Array) {
     if (index > 0) points += ",";
     points += `${x.toFixed(2)}px ${yPercent.toFixed(2)}%`;
   }
-  page.style.clipPath = `polygon(0 0, ${points}, 0 100%)`;
-  page.style.webkitClipPath = `polygon(0 0, ${points}, 0 100%)`;
+  const clip = `polygon(0 0, ${points}, 0 100%)`;
+  page.style.clipPath = clip;
+  page.style.setProperty("-webkit-clip-path", clip);
 }
 
 function strokeContour(
@@ -433,7 +434,7 @@ export function PaperBurnTransition({ active, durationMs, pageRef, onComplete }:
       if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
       page.style.clipPath = "";
-      page.style.webkitClipPath = "";
+      page.style.removeProperty("-webkit-clip-path");
       page.style.filter = "";
       page.style.opacity = "";
       page.style.transition = "";

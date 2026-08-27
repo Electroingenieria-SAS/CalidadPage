@@ -172,7 +172,10 @@ export class LevelScene extends Phaser.Scene {
     if (this.levelIndex > 0) this.paco.controller.celebrate(420);
   }
 
-  private onPickup(_player: Phaser.GameObjects.GameObject, object: Phaser.GameObjects.GameObject) {
+  private onPickup(
+    _player: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody | Phaser.Tilemaps.Tile,
+    object: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody | Phaser.Tilemaps.Tile,
+  ) {
     const pickup = object as Phaser.Physics.Arcade.Sprite;
     if (!pickup.active) return;
     const secret = Boolean(pickup.getData("secret"));
