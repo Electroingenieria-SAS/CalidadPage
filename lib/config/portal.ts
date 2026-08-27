@@ -1,5 +1,12 @@
 import type { ContentTable, PortalRoute, PortalSettings } from "@/types/portal";
 
+// These are intentionally PUBLIC Supabase client values. The publishable key is
+// designed to be embedded in browser applications; authorization is enforced by
+// Supabase Auth + RLS. Environment variables override these fallbacks so the key
+// can still be rotated from the hosting platform without changing application code.
+const DEFAULT_SUPABASE_URL = "https://zultnmgildejjskwdzgq.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_w79Smsvw6FK3NPwMpN4zeQ_ZtxULuX_";
+
 export const PORTAL_CONFIG = {
   title: "Repositorio de Apps Calidad",
   organization: "Electroingeniería S.A.S.",
@@ -11,8 +18,8 @@ export const PORTAL_CONFIG = {
   assetBucket: "portal-assets",
   userAdminFunction: "portal-user-admin",
   accessAdminFunction: "portal-access-admin",
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "",
-  supabasePublishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || "",
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
+  supabasePublishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY,
 } as const;
 
 export const NAV_ITEMS: Array<{ route: PortalRoute; label: string }> = [
