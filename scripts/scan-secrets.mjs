@@ -6,9 +6,13 @@ const ignoredDirs = new Set(["node_modules", ".next", ".git", "dist", "out", "co
 const ignoredFiles = new Set(["package-lock.json"]);
 const textExt = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs", ".json", ".md", ".sql", ".toml", ".yml", ".yaml", ".txt"]);
 const findings = [];
+
+// Supabase `sb_publishable_...` keys are intentionally NOT treated as secrets:
+// they are public client identifiers and are bundled into browser JavaScript.
+// Actual authorization remains enforced by Auth + RLS. Server-only keys such as
+// `sb_secret_...`, service-role JWTs and private keys must never be committed.
 const patterns = [
   ["Supabase secret key", /sb_secret_[A-Za-z0-9_-]{12,}/g],
-  ["Supabase publishable literal", /sb_publishable_(?!REEMPLAZAR|xxx|example)[A-Za-z0-9_-]{12,}/g],
   ["Private key", /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
   ["GitHub token", /gh[pousr]_[A-Za-z0-9]{20,}/g],
   ["AWS access key", /AKIA[0-9A-Z]{16}/g],
