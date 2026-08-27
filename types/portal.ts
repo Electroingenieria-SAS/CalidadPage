@@ -61,6 +61,7 @@ export interface ContentRecord {
   creator_name?: string | null;
   creator_role?: string | null;
   creator_credit?: string | null;
+  requires_identity_unlock?: boolean | null;
   updated_at?: string | null;
   created_at?: string | null;
   [key: string]: unknown;
@@ -180,6 +181,7 @@ export interface RoleContentScope {
 export interface PortalCategory {
   id: string;
   name: string;
+  slug: string;
   module: string;
   is_active: boolean;
 }
