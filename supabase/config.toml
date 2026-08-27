@@ -1,0 +1,4 @@
+project_id = "zultnmgildejjskwdzgq"
+
+[functions.portal-user-admin]
+verify_jwt = true
