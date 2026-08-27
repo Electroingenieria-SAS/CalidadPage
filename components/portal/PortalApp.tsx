@@ -10,7 +10,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { HomeView } from "@/components/home/HomeView";
 import { CollectionView } from "@/components/content/CollectionView";
 import { LoginGate } from "@/components/auth/LoginGate";
-import { DEFAULT_SETTINGS, ROUTE_TO_TABLE } from "@/lib/config/portal";
+import { DEFAULT_SETTINGS, PORTAL_CONFIG, ROUTE_TO_TABLE } from "@/lib/config/portal";
 import {
   getSessionAndProfile,
   isFallbackOnlyPortalSettings,
@@ -71,6 +71,7 @@ export function PortalApp() {
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState("");
 
+  const supabaseConfigured = Boolean(PORTAL_CONFIG.supabaseUrl && PORTAL_CONFIG.supabasePublishableKey);
   const canManage = profile?.is_active !== false && ["super_admin", "admin", "editor"].includes(profile?.role || "");
   const effectiveRoute = access && !routeIsAllowed(route, access, canManage)
     ? firstAllowedRoute(access)
@@ -103,6 +104,8 @@ export function PortalApp() {
   }, []);
 
   useEffect(() => {
+    if (!supabaseConfigured) return undefined;
+
     let active = true;
     void (async () => {
       try {
@@ -131,7 +134,7 @@ export function PortalApp() {
       })();
     });
     return () => { active = false; subscription.unsubscribe(); };
-  }, [refreshAuth, refreshData]);
+  }, [refreshAuth, refreshData, supabaseConfigured]);
 
   useEffect(() => {
     if (!session) return;
@@ -182,6 +185,17 @@ export function PortalApp() {
     const routes: PortalRoute[] = ["inicio", "apps", "documentos", "noticias", "auditorias", "publicaciones", "perfil", "admin"];
     return routes.filter((item) => routeIsAllowed(item, access, canManage));
   }, [access, canManage]);
+
+  if (!supabaseConfigured) {
+    return (
+      <main className="portal-access-denied">
+        <span><LockKeyhole size={24} /></span>
+        <small>CONFIGURACIÓN REQUERIDA</small>
+        <h1>El portal no tiene configurada su conexión pública con Supabase.</h1>
+        <p>Faltan las variables públicas de entorno necesarias para iniciar autenticación. El sistema se detuvo de forma segura antes de cargar información.</p>
+      </main>
+    );
+  }
 
   if (!authReady) {
     return <main className="portal-auth-loading"><LoaderCircle className="spin" size={28} /><strong>Verificando acceso seguro...</strong><small>Validando sesión y permisos.</small></main>;
