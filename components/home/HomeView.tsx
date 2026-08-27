@@ -49,7 +49,10 @@ const moduleDefinitions = [
 
 export function HomeView({ collections, settings, compliments, profile, allowedRoutes, onNavigate, onComplimentSubmitted }: HomeViewProps) {
   const [query, setQuery] = useState("");
-  const collectionEntries = Object.entries(collections) as Array<[keyof PortalCollections, ContentRecord[]]>;
+  const collectionEntries = useMemo(
+    () => Object.entries(collections) as Array<[keyof PortalCollections, ContentRecord[]]>,
+    [collections],
+  );
   const modules = useMemo(() => moduleDefinitions
     .filter((definition) => allowedRoutes.includes(definition.route))
     .map((definition) => ({
@@ -61,7 +64,7 @@ export function HomeView({ collections, settings, compliments, profile, allowedR
   const latest = useMemo(() => collectionEntries
     .flatMap(([table, records]) => records.map((record) => ({ table, record })))
     .sort((a, b) => String(b.record.updated_at || b.record.created_at || "").localeCompare(String(a.record.updated_at || a.record.created_at || "")))
-    .slice(0, 6), [collections]);
+    .slice(0, 6), [collectionEntries]);
 
   const results = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("es");
@@ -70,7 +73,7 @@ export function HomeView({ collections, settings, compliments, profile, allowedR
       .flatMap(([table, records]) => records.map((record) => ({ table, record })))
       .filter(({ record }) => `${recordTitle(record)} ${recordDescription(record)} ${(record.tags || []).join(" ")}`.toLocaleLowerCase("es").includes(needle))
       .slice(0, 7);
-  }, [collections, query]);
+  }, [collectionEntries, query]);
 
   const total = Object.values(collections).reduce((sum, rows) => sum + rows.length, 0);
 

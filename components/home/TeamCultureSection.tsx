@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, LoaderCircle, MessageCircleHeart, Quote, Star, X } from "lucide-react";
 import { Media } from "@/components/shared/Media";
 import { submitCompliment } from "@/lib/supabase/repository";
@@ -40,15 +40,10 @@ export function TeamCultureSection({ team, mascot, compliments, profile, onSubmi
     return counts;
   }, [compliments]);
 
-  useEffect(() => {
-    if (!activeTeam.length) {
-      setFocusedIndex(0);
-      return;
-    }
-    setFocusedIndex((current) => Math.min(current, activeTeam.length - 1));
-  }, [activeTeam.length]);
-
-  const focusedMember = activeTeam[focusedIndex] || null;
+  const normalizedFocusedIndex = activeTeam.length
+    ? Math.min(focusedIndex, activeTeam.length - 1)
+    : 0;
+  const focusedMember = activeTeam[normalizedFocusedIndex] || null;
   const focusedRecognitionCount = focusedMember
     ? recognitionCounts.get(focusedMember.id) || recognitionCounts.get(focusedMember.name.toLocaleLowerCase("es")) || 0
     : 0;
@@ -60,7 +55,7 @@ export function TeamCultureSection({ team, mascot, compliments, profile, onSubmi
 
   function moveFocus(direction: -1 | 1) {
     if (!activeTeam.length) return;
-    setFocusedIndex((current) => (current + direction + activeTeam.length) % activeTeam.length);
+    setFocusedIndex((current) => (Math.min(current, activeTeam.length - 1) + direction + activeTeam.length) % activeTeam.length);
   }
 
   function handleCatalogKeys(event: KeyboardEvent<HTMLDivElement>) {
@@ -121,7 +116,7 @@ export function TeamCultureSection({ team, mascot, compliments, profile, onSubmi
             <article className="team-catalog__focus" key={focusedMember.id}>
               <div className="team-catalog__image">
                 <Media src={focusedMember.photo_url} alt={focusedMember.name} eager />
-                <span className="team-catalog__index">{String(focusedIndex + 1).padStart(2, "0")} / {String(activeTeam.length).padStart(2, "0")}</span>
+                <span className="team-catalog__index">{String(normalizedFocusedIndex + 1).padStart(2, "0")} / {String(activeTeam.length).padStart(2, "0")}</span>
               </div>
               <div className="team-catalog__copy">
                 <span className="eyebrow">Perfil seleccionado</span>
@@ -144,8 +139,8 @@ export function TeamCultureSection({ team, mascot, compliments, profile, onSubmi
                 key={member.id}
                 type="button"
                 role="tab"
-                aria-selected={index === focusedIndex}
-                className={`team-catalog__thumb ${index === focusedIndex ? "is-active" : ""}`}
+                aria-selected={index === normalizedFocusedIndex}
+                className={`team-catalog__thumb ${index === normalizedFocusedIndex ? "is-active" : ""}`}
                 onClick={() => setFocusedIndex(index)}
               >
                 <span className="team-catalog__thumb-media"><Media src={member.photo_url} alt="" /></span>

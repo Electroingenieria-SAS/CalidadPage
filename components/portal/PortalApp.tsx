@@ -10,7 +10,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { HomeView } from "@/components/home/HomeView";
 import { CollectionView } from "@/components/content/CollectionView";
 import { LoginGate } from "@/components/auth/LoginGate";
-import { DEFAULT_SETTINGS, PORTAL_CONFIG, ROUTE_TO_TABLE } from "@/lib/config/portal";
+import { DEFAULT_SETTINGS, ROUTE_TO_TABLE } from "@/lib/config/portal";
 import {
   getSessionAndProfile,
   isFallbackOnlyPortalSettings,
@@ -72,6 +72,9 @@ export function PortalApp() {
   const [loginError, setLoginError] = useState("");
 
   const canManage = profile?.is_active !== false && ["super_admin", "admin", "editor"].includes(profile?.role || "");
+  const effectiveRoute = access && !routeIsAllowed(route, access, canManage)
+    ? firstAllowedRoute(access)
+    : route;
 
   const refreshAuth = useCallback(async () => {
     const auth = await getSessionAndProfile();
@@ -131,13 +134,9 @@ export function PortalApp() {
   }, [refreshAuth, refreshData]);
 
   useEffect(() => {
-    if (access && !routeIsAllowed(route, access, canManage)) setRoute(firstAllowedRoute(access));
-  }, [access, canManage, route]);
-
-  useEffect(() => {
     if (!session) return;
     window.scrollTo({ top: 0, behavior: settings.visual.reducedMotion ? "auto" : "smooth" });
-  }, [route, session, settings.visual.reducedMotion]);
+  }, [effectiveRoute, session, settings.visual.reducedMotion]);
 
   async function handleLogin(email: string, password: string) {
     setLoginBusy(true);
@@ -204,16 +203,16 @@ export function PortalApp() {
     );
   }
 
-  const activeTable = ROUTE_TO_TABLE[route];
-  const panelKey = route === "noticias" ? "news" : route === "auditorias" ? "audits" : route === "documentos" ? "documents" : route === "publicaciones" ? "publications" : "apps";
+  const activeTable = ROUTE_TO_TABLE[effectiveRoute];
+  const panelKey = effectiveRoute === "noticias" ? "news" : effectiveRoute === "auditorias" ? "audits" : effectiveRoute === "documentos" ? "documents" : effectiveRoute === "publicaciones" ? "publications" : "apps";
   const heroKey = settings.banners.map((banner, index) => `${index}:${banner.id}:${banner.media_url}:${banner.is_active !== false ? 1 : 0}:${banner.sort_order || 0}`).join("|");
 
   let content: React.ReactNode;
   if (activeTable) {
     content = <CollectionView table={activeTable} records={collections[activeTable]} panel={settings.modulePanels[panelKey] || DEFAULT_SETTINGS.modulePanels[panelKey]} canManage={canManage} onBack={() => navigate("inicio")} onManage={() => navigate("admin")} />;
-  } else if (route === "perfil") {
+  } else if (effectiveRoute === "perfil") {
     content = <section className="simple-view"><span className="eyebrow">Perfil institucional</span><h1>{profile.full_name || profile.email}</h1><p>{profile.email}</p><div className="profile-summary"><article><span>Rol</span><strong>{profile.role}</strong></article><article><span>Área</span><strong>{profile.process_area || "Sin área asignada"}</strong></article><article><span>Estado</span><strong>Activo</strong></article></div></section>;
-  } else if (route === "admin") {
+  } else if (effectiveRoute === "admin") {
     content = canManage ? <AdminDashboard profile={profile} collections={collections} settings={settings} onRefresh={refreshData} onSettingsChange={setSettings} /> : <section className="simple-view"><h1>Acceso restringido</h1></section>;
   } else if (!settingsReady) {
     content = <section className="hero-data-loading" aria-live="polite" aria-busy="true"><LoaderCircle className="spin" size={30} /><strong>Cargando el repositorio...</strong><span>Preparando tu experiencia según los permisos del rol.</span></section>;
@@ -225,7 +224,7 @@ export function PortalApp() {
     <div className={settings.visual.reducedMotion ? "portal-shell reduce-motion" : "portal-shell"}>
       <div className={`portal-progress ${loading ? "is-active" : ""}`} aria-hidden="true"><span /></div>
       <IntroExperience />
-      <SiteHeader route={route} profile={profile} allowedRoutes={allowedRoutes} onNavigate={navigate} onLogin={() => undefined} onLogout={handleLogout} />
+      <SiteHeader route={effectiveRoute} profile={profile} allowedRoutes={allowedRoutes} onNavigate={navigate} onLogin={() => undefined} onLogout={handleLogout} />
       <main>{content}</main>
       <SiteFooter />
     </div>

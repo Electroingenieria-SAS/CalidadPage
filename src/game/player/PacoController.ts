@@ -119,7 +119,6 @@ export class PacoController {
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
     const dt = Math.min(0.04, deltaMs / 1000);
     const grounded = this.isGrounded(body);
-    const relativeVY = body.velocity.y * this.gravitySign;
 
     if (this.isDead) { body.setVelocityX(0); body.setGravityY(PLAYER_PHYSICS.fallGravity * 0.74 * this.gravitySign); return; }
     if (now > this.airJumpsExpireAt) {

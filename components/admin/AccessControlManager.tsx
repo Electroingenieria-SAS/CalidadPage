@@ -39,6 +39,16 @@ function emptyScope(role: PortalRole, contentType: ContentTable): RoleContentSco
   return { role, content_type: contentType, allow_all: true, allowed_record_ids: [], allowed_category_ids: [], allowed_tags: [] };
 }
 
+function policyForRole(matrix: AccessMatrix, role: PortalRole): RoleAccessPolicy {
+  return matrix.policies.find((item) => item.role === role) || emptyPolicy(role);
+}
+
+function scopesForRole(matrix: AccessMatrix, role: PortalRole): RoleContentScope[] {
+  return CONTENT_META.map(({ table }) =>
+    matrix.scopes.find((item) => item.role === role && item.content_type === table) || emptyScope(role, table),
+  );
+}
+
 export function AccessControlManager() {
   const [matrix, setMatrix] = useState<AccessMatrix | null>(null);
   const [selectedRole, setSelectedRole] = useState<PortalRole>("admin");
@@ -55,6 +65,8 @@ export function AccessControlManager() {
     try {
       const data = await invokeAccessAdmin("get");
       setMatrix(data);
+      setPolicy(policyForRole(data, selectedRole));
+      setScopes(scopesForRole(data, selectedRole));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "No fue posible cargar la matriz de permisos.");
     } finally {
@@ -62,15 +74,39 @@ export function AccessControlManager() {
     }
   }
 
-  useEffect(() => { void load(); }, []);
-
   useEffect(() => {
-    if (!matrix) return;
-    setPolicy(matrix.policies.find((item) => item.role === selectedRole) || emptyPolicy(selectedRole));
-    setScopes(CONTENT_META.map(({ table }) => matrix.scopes.find((item) => item.role === selectedRole && item.content_type === table) || emptyScope(selectedRole, table)));
+    let cancelled = false;
+
+    async function loadInitialMatrix() {
+      try {
+        const data = await invokeAccessAdmin("get");
+        if (cancelled) return;
+        setMatrix(data);
+        setPolicy(policyForRole(data, "admin"));
+        setScopes(scopesForRole(data, "admin"));
+      } catch (caught) {
+        if (!cancelled) setError(caught instanceof Error ? caught.message : "No fue posible cargar la matriz de permisos.");
+      } finally {
+        if (!cancelled) setBusy(false);
+      }
+    }
+
+    void loadInitialMatrix();
+    return () => { cancelled = true; };
+  }, []);
+
+  function changeRole(role: PortalRole) {
+    setSelectedRole(role);
+    if (matrix) {
+      setPolicy(policyForRole(matrix, role));
+      setScopes(scopesForRole(matrix, role));
+    } else {
+      setPolicy(emptyPolicy(role));
+      setScopes(CONTENT_META.map(({ table }) => emptyScope(role, table)));
+    }
     setMessage("");
     setError("");
-  }, [matrix, selectedRole]);
+  }
 
   const allTags = useMemo(() => {
     if (!matrix) return [];
@@ -123,7 +159,7 @@ export function AccessControlManager() {
       </header>
 
       <div className="access-manager__rolebar">
-        <label><span>Rol a configurar</span><select value={selectedRole} onChange={(event) => setSelectedRole(event.target.value as PortalRole)}>{ROLES.map((role) => <option key={role} value={role}>{labelRole(role)}</option>)}</select></label>
+        <label><span>Rol a configurar</span><select value={selectedRole} onChange={(event) => changeRole(event.target.value as PortalRole)}>{ROLES.map((role) => <option key={role} value={role}>{labelRole(role)}</option>)}</select></label>
         {selectedRole === "super_admin" ? <div className="access-manager__locked"><KeyRound size={18} /><span><strong>Acceso total permanente</strong><small>El super admin no puede bloquearse a sí mismo.</small></span></div> : null}
       </div>
 

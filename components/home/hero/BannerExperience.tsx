@@ -74,23 +74,9 @@ export function BannerExperience({ banners, onNavigate }: BannerExperienceProps)
 
   useEffect(() => clearTransitionWork, [clearTransitionWork]);
 
-  const bannerSignature = useMemo(
-    () => activeBanners.map((item, index) => `${index}:${item.id}:${item.media_url}:${item.sort_order || 0}`).join("|"),
-    [activeBanners],
-  );
-  const previousBannerSignatureRef = useRef(bannerSignature);
-
-  useEffect(() => {
-    if (previousBannerSignatureRef.current === bannerSignature) return;
-    previousBannerSignatureRef.current = bannerSignature;
-    clearTransitionWork();
-    transitionLockRef.current = false;
-    setActiveIndex(0);
-    setTargetIndex(null);
-    setPhase("idle");
-    setDirection(1);
-    setTransitionSerial((serial) => serial + 1);
-  }, [bannerSignature, clearTransitionWork]);
+  // BannerExperience is remounted by HomeView when the banner signature changes.
+  // Keeping reset state out of an Effect avoids synchronous state cascades and
+  // preserves the same zero-frame-flash transition behavior.
 
   const isPaused = manualPaused;
   const safeIndex = activeBanners.length ? activeIndex % activeBanners.length : 0;

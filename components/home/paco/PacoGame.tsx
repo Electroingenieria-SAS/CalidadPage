@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MascotItem } from "@/types/portal";
 
-export function PacoGame({ mascot: _mascot }: { mascot: MascotItem[] }) {
+export function PacoGame({ mascot }: { mascot: MascotItem[] }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const [ready, setReady] = useState(false);
@@ -30,7 +30,7 @@ export function PacoGame({ mascot: _mascot }: { mascot: MascotItem[] }) {
   }, []);
 
   return (
-    <section id="paco-game" className="paco-phaser-section" aria-label="Paco Runner">
+    <section id="paco-game" className="paco-phaser-section" aria-label="Paco Runner" data-mascot-items={mascot.length}>
       <div className="paco-phaser-frame">
         <div ref={hostRef} className="paco-phaser-host" />
         {!ready ? (

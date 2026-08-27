@@ -13,10 +13,12 @@
     "typecheck": "tsc --noEmit",
     "preflight": "node scripts/preflight.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",
-    "security:audit": "npm audit --audit-level=high",
+    "security:audit": "npm audit --omit=dev --audit-level=high",
     "verify": "npm run scan:secrets && npm run lint && npm run typecheck",
     "setup": "node scripts/setup.mjs",
-    "handoff:check": "node scripts/verify-handoff.mjs"
+    "handoff:check": "node scripts/verify-handoff.mjs",
+    "security:audit:full": "npm audit --audit-level=high",
+    "verify:ci": "npm run scan:secrets && npm run lint && npm run typecheck && npm run security:audit && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.105.0",

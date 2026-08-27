@@ -127,9 +127,9 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
     .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")))
     .slice(0, 8), [records]);
 
-  useEffect(() => {
-    if (activeIndex >= showcaseRecords.length) setActiveIndex(0);
-  }, [activeIndex, showcaseRecords.length]);
+  const normalizedActiveIndex = showcaseRecords.length
+    ? Math.min(activeIndex, showcaseRecords.length - 1)
+    : 0;
 
   useEffect(() => {
     if (catalogPaused || showcaseRecords.length <= 1) return;
@@ -159,14 +159,14 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
       left: targetLeft,
       behavior: catalogPaused ? "auto" : "smooth",
     });
-  }, [activeIndex, catalogPaused]);
+  }, [normalizedActiveIndex, catalogPaused]);
 
-  const activeRecord = circularRecord(showcaseRecords, activeIndex);
+  const activeRecord = circularRecord(showcaseRecords, normalizedActiveIndex);
   const activeLink = activeRecord ? recordLink(activeRecord) : "";
 
   function moveCatalog(direction: -1 | 1) {
     if (showcaseRecords.length <= 1) return;
-    setActiveIndex((index) => (index + direction + showcaseRecords.length) % showcaseRecords.length);
+    setActiveIndex((index) => (Math.min(index, showcaseRecords.length - 1) + direction + showcaseRecords.length) % showcaseRecords.length);
   }
 
   function beginCatalogDrag(clientX: number) {
@@ -232,7 +232,7 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
         <div className="collection-showcase" aria-label={`Catálogo animado de ${labels.plural}`}>
           <div className="collection-showcase__topline">
             <span><Layers3 size={14} /> Explorar {labels.plural}</span>
-            <small>{showcaseRecords.length ? `${String(activeIndex + 1).padStart(2, "0")} / ${String(showcaseRecords.length).padStart(2, "0")}` : "00 / 00"}</small>
+            <small>{showcaseRecords.length ? `${String(normalizedActiveIndex + 1).padStart(2, "0")} / ${String(showcaseRecords.length).padStart(2, "0")}` : "00 / 00"}</small>
           </div>
 
           <div
@@ -244,10 +244,10 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
           >
             <div className="collection-coverflow" role="listbox" aria-label={`Selector visual de ${labels.plural}`}>
               {showcaseRecords.length ? showcaseRecords.map((record, index) => {
-                const offset = circularOffset(index, activeIndex, showcaseRecords.length);
+                const offset = circularOffset(index, normalizedActiveIndex, showcaseRecords.length);
                 if (Math.abs(offset) > 2) return null;
                 const media = heroMedia(record, panel);
-                const isActive = index === activeIndex;
+                const isActive = index === normalizedActiveIndex;
                 const isFar = Math.abs(offset) === 2;
                 const coverStyle = {
                   "--cover-x": `${offset * (isFar ? 66 : 82)}%`,
@@ -292,7 +292,7 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
               {showcaseRecords.length ? showcaseRecords.map((record, index) => {
                 const media = heroMedia(record, panel);
                 return (
-                  <button key={record.id} type="button" className={index === activeIndex ? "is-active" : ""} onClick={() => setActiveIndex(index)} aria-label={`Mostrar ${recordTitle(record)}`}>
+                  <button key={record.id} type="button" className={index === normalizedActiveIndex ? "is-active" : ""} onClick={() => setActiveIndex(index)} aria-label={`Mostrar ${recordTitle(record)}`}>
                     <span>{media ? <Media src={media} alt="" fit="contain" /> : <Icon size={18} strokeWidth={1.4} />}</span>
                     <small>{String(index + 1).padStart(2, "0")}</small>
                   </button>
