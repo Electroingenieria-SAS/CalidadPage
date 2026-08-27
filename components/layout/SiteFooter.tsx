@@ -1,4 +1,5 @@
-import { BadgeCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { BadgeCheck, FileText, Sparkles } from "lucide-react";
 import { PORTAL_CONFIG } from "@/lib/config/portal";
 
 export function SiteFooter() {
@@ -21,10 +22,11 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="site-footer__bottom">
-        <span>Repositorio de Apps Calidad</span>
+        <span>© 2026 Electroingeniería S.A.S. · Todos los derechos reservados.</span>
+        <Link href="/legal" className="site-footer__legal"><FileText size={14} /> Políticas web & privacidad</Link>
         <div className="creator-signature">
           <BadgeCheck size={22} />
-          <span>Creado y desarrollado por</span>
+          <span>Diseño y desarrollo</span>
           <strong>{PORTAL_CONFIG.creator}</strong>
           <small>{PORTAL_CONFIG.creatorRole}</small>
         </div>
