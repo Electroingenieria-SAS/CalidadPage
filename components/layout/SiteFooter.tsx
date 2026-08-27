@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BadgeCheck, FileText, Sparkles } from "lucide-react";
+import { InstitutionalDock } from "@/components/shared/InstitutionalDock";
 import { PORTAL_CONFIG } from "@/lib/config/portal";
 
 export function SiteFooter() {
@@ -31,6 +32,7 @@ export function SiteFooter() {
           <small>{PORTAL_CONFIG.creatorRole}</small>
         </div>
       </div>
+      <InstitutionalDock />
     </footer>
   );
 }
