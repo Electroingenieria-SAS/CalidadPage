@@ -2,5 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "npm ci",
-  "buildCommand": "npm run build"
+  "buildCommand": "npm run build",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://zultnmgildejjskwdzgq.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_w79Smsvw6FK3NPwMpN4zeQ_ZtxULuX_",
+    "NEXT_PUBLIC_SITE_URL": "https://calidad-page.vercel.app"
+  }
 }
