@@ -1,8 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { KeyRound, LoaderCircle, Pencil, Power, Search, ShieldAlert, Trash2, UserPlus2 } from "lucide-react";
+import { Fingerprint, KeyRound, LoaderCircle, Pencil, Power, Search, ShieldAlert, ShieldCheck, Trash2, UserPlus2 } from "lucide-react";
 import { invokeUserAdmin } from "@/lib/supabase/repository";
+import { invokeIdentityAccess } from "@/lib/supabase/identity";
 import type { ManagedUser, PortalRole } from "@/types/portal";
 
 const roles: Array<{ value: PortalRole; label: string }> = [
@@ -29,6 +30,7 @@ const emptyUser = {
   full_name: "",
   role: "viewer" as PortalRole,
   process_area: "Calidad y Mejoramiento Continuo",
+  document_number: "",
 };
 
 interface UserManagerProps {
@@ -45,9 +47,12 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
   const [selected, setSelected] = useState<ManagedUser | null>(null);
   const [createForm, setCreateForm] = useState(emptyUser);
   const [editForm, setEditForm] = useState({ full_name: "", role: "viewer" as PortalRole, process_area: "", password: "" });
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [documentConfigured, setDocumentConfigured] = useState<boolean | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [identityBusy, setIdentityBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -85,15 +90,42 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
   const selectedIsLower = selected ? rank(selected.role) < rank(currentUserRole) : false;
   const canManageSelected = Boolean(selected && !selectedIsSelf && selectedIsLower);
   const canEditSelected = Boolean(selected && (selectedIsSelf || selectedIsLower));
+  const canConfigureIdentity = Boolean(
+    selected && (
+      (currentUserRole === "super_admin" && (selectedIsSelf || selectedIsLower)) ||
+      (currentUserRole === "admin" && selectedIsLower)
+    ),
+  );
   const editRoleOptions = selected && !canManageSelected
     ? roles.filter((role) => role.value === selected.role)
     : assignableRoles;
 
+  function canConfigureIdentityFor(user: ManagedUser) {
+    if (currentUserRole === "super_admin") return user.id === currentUserId || rank(user.role) < rank(currentUserRole);
+    return currentUserRole === "admin" && user.id !== currentUserId && rank(user.role) < rank(currentUserRole);
+  }
+
+  async function refreshIdentityStatus(userId: string) {
+    setIdentityBusy(true);
+    try {
+      const result = await invokeIdentityAccess("status", { user_id: userId });
+      setDocumentConfigured(Boolean(result.configured));
+    } catch (caught) {
+      setDocumentConfigured(null);
+      setError(caught instanceof Error ? caught.message : "No fue posible consultar la cédula configurada.");
+    } finally {
+      setIdentityBusy(false);
+    }
+  }
+
   function choose(user: ManagedUser) {
     setSelected(user);
     setEditForm({ full_name: user.full_name, role: user.role, process_area: user.process_area, password: "" });
+    setDocumentNumber("");
+    setDocumentConfigured(null);
     setMessage("");
     setError("");
+    if (canConfigureIdentityFor(user)) void refreshIdentityStatus(user.id);
   }
 
   async function create(event: FormEvent) {
@@ -102,10 +134,14 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
     setError("");
     setMessage("");
     try {
-      await invokeUserAdmin("create", createForm);
+      const { document_number, ...userPayload } = createForm;
+      const result = await invokeUserAdmin("create", userPayload);
+      if (document_number.trim() && result.user?.id) {
+        await invokeIdentityAccess("set_document", { user_id: result.user.id, document_number });
+      }
       setCreateForm(emptyUser);
       await load();
-      setMessage("Usuario creado y confirmado correctamente.");
+      setMessage(document_number.trim() ? "Usuario creado con cédula protegida configurada." : "Usuario creado y confirmado correctamente.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "No fue posible crear el usuario.");
     } finally {
@@ -131,8 +167,8 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
   }
 
   async function setPassword() {
-    if (!selected || !canEditSelected || editForm.password.length < 8) {
-      setError("La nueva contraseña debe tener al menos 8 caracteres.");
+    if (!selected || !canEditSelected || editForm.password.length < 12) {
+      setError("La nueva contraseña debe tener al menos 12 caracteres.");
       return;
     }
     setBusy(true); setError(""); setMessage("");
@@ -143,6 +179,32 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "No fue posible cambiar la contraseña.");
     } finally { setBusy(false); }
+  }
+
+  async function setDocumentAccess() {
+    if (!selected || !canConfigureIdentity || !documentNumber.trim()) return;
+    setIdentityBusy(true); setError(""); setMessage("");
+    try {
+      await invokeIdentityAccess("set_document", { user_id: selected.id, document_number: documentNumber });
+      setDocumentNumber("");
+      setDocumentConfigured(true);
+      setMessage("Cédula configurada. El número no se guarda en texto plano.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "No fue posible configurar la cédula.");
+    } finally { setIdentityBusy(false); }
+  }
+
+  async function clearDocumentAccess() {
+    if (!selected || !canConfigureIdentity || !window.confirm("¿Retirar la cédula configurada para este usuario? Los recursos protegidos dejarán de abrirse hasta configurar una nueva.")) return;
+    setIdentityBusy(true); setError(""); setMessage("");
+    try {
+      await invokeIdentityAccess("clear_document", { user_id: selected.id });
+      setDocumentConfigured(false);
+      setDocumentNumber("");
+      setMessage("Cédula protegida retirada de la cuenta.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "No fue posible retirar la cédula.");
+    } finally { setIdentityBusy(false); }
   }
 
   async function toggleUser() {
@@ -178,9 +240,10 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
         <div className="form-grid">
           <label className="span-2"><span>Nombre completo</span><input value={createForm.full_name} onChange={(event) => setCreateForm({ ...createForm, full_name: event.target.value })} required /></label>
           <label className="span-2"><span>Correo</span><input type="email" value={createForm.email} onChange={(event) => setCreateForm({ ...createForm, email: event.target.value })} required /></label>
-          <label><span>Contraseña inicial</span><input type="password" minLength={8} value={createForm.password} onChange={(event) => setCreateForm({ ...createForm, password: event.target.value })} required /></label>
+          <label><span>Contraseña inicial</span><input type="password" minLength={12} maxLength={128} value={createForm.password} onChange={(event) => setCreateForm({ ...createForm, password: event.target.value })} placeholder="12+ caracteres" required /></label>
           <label><span>Rol</span><select value={createForm.role} onChange={(event) => setCreateForm({ ...createForm, role: event.target.value as PortalRole })}>{assignableRoles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
           <label className="span-2"><span>Área o proceso</span><input value={createForm.process_area} onChange={(event) => setCreateForm({ ...createForm, process_area: event.target.value })} /></label>
+          <label className="span-2 identity-user-field"><span>Cédula para contenidos con candado <small>Opcional</small></span><input type="password" inputMode="numeric" autoComplete="off" maxLength={20} value={createForm.document_number} onChange={(event) => setCreateForm({ ...createForm, document_number: event.target.value.replace(/\D/g, "") })} placeholder="Se transforma en una huella protegida" /><small>El número no se almacena en texto plano ni se incluye en el perfil visible.</small></label>
         </div>
         <button type="submit" className="primary-button primary-button--full" disabled={busy}>{busy ? <LoaderCircle className="spin" size={18} /> : <UserPlus2 size={18} />} Crear usuario</button>
       </form>
@@ -216,8 +279,23 @@ export function UserManager({ currentUserId, currentUserRole }: UserManagerProps
           <label><span>Rol</span><select value={editForm.role} onChange={(event) => setEditForm({ ...editForm, role: event.target.value as PortalRole })} disabled={!canManageSelected}>{editRoleOptions.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
           <label><span>Área o proceso</span><input value={editForm.process_area} onChange={(event) => setEditForm({ ...editForm, process_area: event.target.value })} disabled={!canEditSelected} /></label>
           <button type="button" className="primary-button primary-button--full" onClick={saveUser} disabled={busy || !canEditSelected}>Guardar perfil y rol</button>
+
+          {canConfigureIdentity ? (
+            <section className="identity-user-panel">
+              <div className="identity-user-panel__head">
+                <span><Fingerprint size={21} /></span>
+                <div><strong>Acceso con cédula</strong><small>{identityBusy ? "Consultando..." : documentConfigured === true ? "Cédula configurada" : documentConfigured === false ? "Sin cédula configurada" : "Estado no consultado"}</small></div>
+                {documentConfigured ? <ShieldCheck size={19} /> : null}
+              </div>
+              <label><span>Nueva cédula</span><input type="password" inputMode="numeric" autoComplete="off" maxLength={20} value={documentNumber} onChange={(event) => setDocumentNumber(event.target.value.replace(/\D/g, ""))} placeholder="Escribe el número para configurar o reemplazar" /></label>
+              <small className="identity-user-panel__note">Solo se conserva una huella HMAC. El número real no puede recuperarse desde la base de datos.</small>
+              <button type="button" className="secondary-button user-editor__action" onClick={() => void setDocumentAccess()} disabled={identityBusy || !documentNumber.trim()}><Fingerprint size={17} /> {documentConfigured ? "Reemplazar cédula" : "Configurar cédula"}</button>
+              {documentConfigured ? <button type="button" className="secondary-button user-editor__action user-editor__action--danger" onClick={() => void clearDocumentAccess()} disabled={identityBusy}><Trash2 size={17} /> Retirar cédula</button> : null}
+            </section>
+          ) : null}
+
           <hr />
-          <label><span>Nueva contraseña</span><input type="password" minLength={8} value={editForm.password} onChange={(event) => setEditForm({ ...editForm, password: event.target.value })} placeholder="Mínimo 8 caracteres" disabled={!canEditSelected} /></label>
+          <label><span>Nueva contraseña</span><input type="password" minLength={12} maxLength={128} value={editForm.password} onChange={(event) => setEditForm({ ...editForm, password: event.target.value })} placeholder="Mínimo 12 caracteres" disabled={!canEditSelected} /></label>
           <button type="button" className="secondary-button user-editor__action" onClick={setPassword} disabled={busy || !canEditSelected}><KeyRound size={17} /> Cambiar contraseña</button>
           <button type="button" className="secondary-button user-editor__action" onClick={toggleUser} disabled={busy || !canManageSelected}><Power size={17} /> {selected.is_active ? "Desactivar acceso" : "Reactivar acceso"}</button>
           <button type="button" className="secondary-button user-editor__action user-editor__action--danger" onClick={deleteUser} disabled={busy || !canManageSelected}><Trash2 size={17} /> Eliminar usuario</button>
