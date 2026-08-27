@@ -9,6 +9,7 @@ import {
   FileCheck2,
   FileText,
   Layers3,
+  LockKeyhole,
   Megaphone,
   Newspaper,
   Search,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Media } from "@/components/shared/Media";
+import { IdentityUnlockDialog } from "@/components/content/IdentityUnlockDialog";
 import { CONTENT_LABELS } from "@/lib/config/portal";
 import { formatDate, recordDescription, recordLink, recordTitle } from "@/lib/utils/format";
 import type { ContentRecord, ContentTable, ModulePanel } from "@/types/portal";
@@ -106,6 +108,7 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [catalogPaused, setCatalogPaused] = useState(false);
+  const [lockedRecord, setLockedRecord] = useState<ContentRecord | null>(null);
   const pointerStartX = useRef<number | null>(null);
   const catalogDragged = useRef(false);
   const thumbRailRef = useRef<HTMLDivElement | null>(null);
@@ -144,10 +147,6 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
     const activeThumb = rail?.querySelector<HTMLButtonElement>("button.is-active");
     if (!rail || !activeThumb) return;
 
-    // Keep the automatic centering fully contained inside the thumbnail rail.
-    // scrollIntoView() can also move the document horizontally when the active
-    // item reaches the middle/end of the catalogue, which made the whole hero
-    // appear to slide to the right around items 4–5.
     const railRect = rail.getBoundingClientRect();
     const thumbRect = activeThumb.getBoundingClientRect();
     const thumbCenterInsideRail = (thumbRect.left - railRect.left) + rail.scrollLeft + (thumbRect.width / 2);
@@ -162,7 +161,7 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
   }, [normalizedActiveIndex, catalogPaused]);
 
   const activeRecord = circularRecord(showcaseRecords, normalizedActiveIndex);
-  const activeLink = activeRecord ? recordLink(activeRecord) : "";
+  const activeLink = activeRecord && !activeRecord.requires_identity_unlock ? recordLink(activeRecord) : "";
 
   function moveCatalog(direction: -1 | 1) {
     if (showcaseRecords.length <= 1) return;
@@ -267,6 +266,7 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
                   >
                     <span className={`collection-coverflow__media ${media ? "" : "collection-coverflow__media--fallback"}`}>
                       {media ? <Media src={media} alt={recordTitle(record)} fit="contain" eager={isActive} /> : <Icon size={54} strokeWidth={1.35} />}
+                      {record.requires_identity_unlock ? <i className="identity-cover-lock" aria-label="Protegido con cédula"><LockKeyhole size={15} /></i> : null}
                     </span>
                     <span className="collection-coverflow__number">{String(index + 1).padStart(2, "0")}</span>
                   </button>
@@ -283,7 +283,11 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
               <strong>{activeRecord ? recordTitle(activeRecord) : panel.title}</strong>
               <p>{activeRecord ? recordDescription(activeRecord) : panel.description}</p>
             </div>
-            {activeLink ? <a href={activeLink} target="_blank" rel="noopener noreferrer"><span>{meta.actionLabel}</span><ArrowUpRight size={16} /></a> : null}
+            {activeRecord?.requires_identity_unlock ? (
+              <button type="button" className="identity-lock-trigger" onClick={() => setLockedRecord(activeRecord)}><span>Desbloquear con cédula</span><LockKeyhole size={16} /></button>
+            ) : activeLink ? (
+              <a href={activeLink} target="_blank" rel="noopener noreferrer"><span>{meta.actionLabel}</span><ArrowUpRight size={16} /></a>
+            ) : null}
           </div>
 
           <div className="collection-showcase__navigator">
@@ -293,7 +297,7 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
                 const media = heroMedia(record, panel);
                 return (
                   <button key={record.id} type="button" className={index === normalizedActiveIndex ? "is-active" : ""} onClick={() => setActiveIndex(index)} aria-label={`Mostrar ${recordTitle(record)}`}>
-                    <span>{media ? <Media src={media} alt="" fit="contain" /> : <Icon size={18} strokeWidth={1.4} />}</span>
+                    <span>{media ? <Media src={media} alt="" fit="contain" /> : <Icon size={18} strokeWidth={1.4} />}{record.requires_identity_unlock ? <i className="identity-thumb-lock"><LockKeyhole size={10} /></i> : null}</span>
                     <small>{String(index + 1).padStart(2, "0")}</small>
                   </button>
                 );
@@ -323,16 +327,17 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
 
         <div className="resource-grid">
           {filtered.length ? filtered.map((record, index) => {
-            const link = recordLink(record);
+            const link = record.requires_identity_unlock ? "" : recordLink(record);
             const media = String(record.image_url || record.icon_url || "");
             const title = recordTitle(record);
             return (
-              <article key={record.id} className="resource-card" style={{ "--delay": `${Math.min(index, 12) * 45}ms` } as React.CSSProperties}>
+              <article key={record.id} className={`resource-card ${record.requires_identity_unlock ? "resource-card--identity-locked" : ""}`} style={{ "--delay": `${Math.min(index, 12) * 45}ms` } as React.CSSProperties}>
                 <div className={`resource-card__media ${media ? "" : "resource-card__media--empty"}`}>
                   {media ? <Media src={media} alt={title} fit="contain" /> : (
                     <span className="resource-card__fallback" aria-hidden="true"><Icon size={34} strokeWidth={1.45} /><small>{meta.emptyLabel}</small></span>
                   )}
                   <small className="resource-card__index">{String(index + 1).padStart(2, "0")}</small>
+                  {record.requires_identity_unlock ? <span className="resource-card__identity-badge"><LockKeyhole size={13} /> Solo con cédula</span> : null}
                   <span className="resource-card__shine" aria-hidden="true" />
                 </div>
                 <div className="resource-card__body">
@@ -350,7 +355,11 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
                       <span>{String(record.creator_role || "Analista de Calidad")}</span>
                     </div>
                   ) : null}
-                  {link ? <a href={link} target="_blank" rel="noopener noreferrer"><span>{meta.actionLabel}</span><ArrowUpRight size={16} /></a> : <span className="resource-card__unavailable">Sin enlace publicado</span>}
+                  {record.requires_identity_unlock ? (
+                    <button type="button" className="identity-lock-trigger identity-lock-trigger--card" onClick={() => setLockedRecord(record)}><span>Desbloquear con cédula</span><LockKeyhole size={16} /></button>
+                  ) : link ? (
+                    <a href={link} target="_blank" rel="noopener noreferrer"><span>{meta.actionLabel}</span><ArrowUpRight size={16} /></a>
+                  ) : <span className="resource-card__unavailable">Sin enlace publicado</span>}
                 </div>
               </article>
             );
@@ -363,6 +372,8 @@ export function CollectionView({ table, records, panel, canManage, onBack, onMan
           )}
         </div>
       </section>
+
+      {lockedRecord ? <IdentityUnlockDialog table={table} record={lockedRecord} onClose={() => setLockedRecord(null)} /> : null}
     </div>
   );
 }
