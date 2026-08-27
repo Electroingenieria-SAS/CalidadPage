@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BrandMark } from "@/components/shared/BrandMark";
+import { InstitutionalDock } from "@/components/shared/InstitutionalDock";
 
 interface LoginGateProps {
   busy: boolean;
@@ -68,7 +69,7 @@ export function LoginGate({ busy, error, defaultEmail = "", onSubmit }: LoginGat
 
           <div className="login-premium__footer-line">
             <span><i /> Conexión segura</span>
-            <span>Electroingeniería S.A.S.</span>
+            <span>© 2026 Electroingeniería S.A.S.</span>
           </div>
         </aside>
 
@@ -137,6 +138,8 @@ export function LoginGate({ busy, error, defaultEmail = "", onSubmit }: LoginGat
           </div>
         </div>
       </section>
+
+      <InstitutionalDock variant="login" />
     </main>
   );
 }
