@@ -1,0 +1,37 @@
+{
+  "name": "calidoso-team",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "preflight": "node scripts/preflight.mjs",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "security:audit": "npm audit --audit-level=high",
+    "verify": "npm run scan:secrets && npm run lint && npm run typecheck",
+    "setup": "node scripts/setup.mjs",
+    "handoff:check": "node scripts/verify-handoff.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.105.0",
+    "lucide-react": "0.468.0",
+    "next": "16.3.3",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.3.3",
+    "typescript": "5.9.3"
+  }
+}

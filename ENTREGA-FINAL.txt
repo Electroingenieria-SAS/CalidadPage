@@ -1,0 +1,32 @@
+CALIDOSO TEAM / PAGE-CALIDAD — ENTREGA FINAL SEGURA V2
+
+Incluye:
+- Código fuente completo.
+- Login obligatorio antes de montar el portal.
+- Matriz de permisos por rol administrada por super_admin.
+- Permisos por módulo, registro, categoría y etiqueta.
+- Etiquetas para Apps, documentos, noticias, auditorías y publicaciones.
+- API/Edge Functions para usuarios y accesos.
+- Migraciones Supabase reproducibles.
+- Hardening RLS/Storage/API/cabeceras/validación.
+- .env.example sin secretos.
+- CI de seguridad, Dependabot y scanner de secretos.
+- Documentación técnica y operativa completa.
+- Next.js 16.3.3 declarado en package.json/package-lock.json.
+
+Flujo esperado de despliegue:
+GitHub main -> Vercel Production -> Supabase
+
+IMPORTANTE:
+1. Configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY en Vercel.
+2. No subir .env.local ni secretos al repositorio.
+3. Las migraciones role_access_and_tags y seed_base_content_tags ya están aplicadas en el Supabase de producción usado durante esta entrega.
+4. Las Edge Functions portal-user-admin v5 y portal-access-admin v1 quedaron activas en ese proyecto.
+5. Turnstile, Leaked Password Protection, Password Verification Hook 5/15 y rotación de la publishable key requieren configuración administrativa externa según README/docs.
+
+DOCUMENTACIÓN DE ENTREGA/DOMINIO AÑADIDA:
+- INSTALL.md: instalación maestra paso a paso.
+- docs/ENTREGA-DOMINIO-HOSTING.md: Vercel, DNS, HTTPS y cambio de hosting.
+- docs/CHECKLIST-RECEPCION-Y-TRASPASO.md: aceptación por tercero.
+- npm run setup: prepara entorno local sin escribir secretos.
+- npm run handoff:check: verifica estructura mínima del entregable.
