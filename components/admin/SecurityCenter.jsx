@@ -1,0 +1,20 @@
+"use client";import{AlertTriangle as S,CheckCircle2 as C,FileKey2 as _,LockKeyhole as A,ScanSearch as H,ServerCog as L,ShieldCheck as N}from"lucide-react";const s=[["Claves API fuera del c\xF3digo","ok","Las claves se leen exclusivamente desde variables de entorno."],["Secretos Git","ok","El repositorio incluye scanner y reglas de exclusi\xF3n para .env y credenciales."],["Publishable key moderna","manual","El cliente usa NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY; crea una nueva clave en Supabase y reempl\xE1zala en Vercel antes de revocar la anterior."],["RLS y acceso por rol","ok","RLS activo y matriz por m\xF3dulo, registro, categor\xEDa y etiqueta."],["Datos sensibles","ok","No se almacenan contrase\xF1as ni secretos en tablas p\xFAblicas; Supabase Auth gestiona hashes bcrypt."],["Operaciones privilegiadas","ok","Usuarios y permisos pasan por Route Handler + Edge Function con JWT."],["Restricci\xF3n de registros","ok","La base filtra contenido mediante private.portal_can_read_scoped()."],["Campos administrativos","ok","Role/is_active no son editables directamente por usuarios normales."],["Sesi\xF3n","ok","No existen cookies propias inseguras; la sesi\xF3n Supabase se valida contra Auth antes de cargar el portal."],["Contrase\xF1as","ok","Supabase Auth almacena \xFAnicamente hashes; administraci\xF3n exige contrase\xF1a fuerte."],["5 intentos / 15 minutos","manual","La funci\xF3n/hook est\xE1 preparada en Supabase; debe habilitarse en Authentication > Hooks para que el bloqueo sea global."],["Protecci\xF3n contra bots","manual","Activar Turnstile/hCaptcha en Supabase Auth cuando se disponga de las claves del proveedor."],["Monitoreo DB","ok","Se incluyen consultas pg_stat_statements, logs y gu\xEDa de operaci\xF3n."],["Validaci\xF3n de entradas","ok","Route Handlers, Edge Functions y formularios aplican l\xEDmites y validaciones."],["XSS / contenido","ok","No se usa dangerouslySetInnerHTML/eval y se a\xF1aden cabeceras CSP."],["Subida de archivos","ok","MIME, firma, extensi\xF3n y tama\xF1o se validan antes de Storage."],["Respuesta API","ok","Bodies, acciones, tiempos de espera y cache no-store est\xE1n limitados."],["Cabeceras","ok","CSP, HSTS, nosniff, frame-ancestors, referrer y permissions policy."],["HTTPS","ok","Vercel fuerza HTTPS y se publica HSTS."],["Dependencias","ok","GitHub Actions, Dependabot, npm audit y scanner de secretos incluidos."]];function T(){const o=s.filter(([,e])=>e==="ok").length;return<div className="security-center">
+      <header className="security-center__hero">
+        <div><span className="eyebrow"><N size={16}/> Seguridad y operación</span><h2>Controles de producción.</h2><p>Vista ejecutiva de las capas aplicadas al repositorio y de las dos configuraciones externas que dependen de credenciales del proveedor.</p></div>
+        <aside><strong>{o}/{s.length}</strong><span>controles automatizados o implementados</span></aside>
+      </header>
+      <div className="security-center__architecture">
+        <article><A size={20}/><span><strong>Identidad</strong><small>Supabase Auth + rol activo</small></span></article>
+        <article><L size={20}/><span><strong>Servidor</strong><small>Vercel Route Handlers + Edge Functions</small></span></article>
+        <article><_ size={20}/><span><strong>Datos</strong><small>RLS + scopes + permisos de columnas</small></span></article>
+        <article><H size={20}/><span><strong>Supply chain</strong><small>CI, audit, Dependabot y scanner</small></span></article>
+      </div>
+      <div className="security-control-grid">
+        {s.map(([e,a,n],r)=><article key={e}className={a==="ok"?"is-ok":"is-manual"}>
+            <span className="security-control-grid__number">{String(r+1).padStart(2,"0")}</span>
+            {a==="ok"?<C size={18}/>:<S size={18}/>}
+            <div><strong>{e}</strong><p>{n}</p></div>
+            <small>{a==="ok"?"Implementado":"Configuraci\xF3n externa"}</small>
+          </article>)}
+      </div>
+    </div>}export{T as SecurityCenter};

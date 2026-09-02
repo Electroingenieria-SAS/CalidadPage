@@ -1,0 +1,1 @@
+import{PortalApp as A}from"@/components/portal/PortalApp";function H(){return<A/>}export{H as default};
