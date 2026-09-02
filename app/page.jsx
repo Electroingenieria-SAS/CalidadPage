@@ -1,0 +1,1 @@
+import{PortalApp as A}from"@/x/0j";function H(){return<A/>}export{H as default};
